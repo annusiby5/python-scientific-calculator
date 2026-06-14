@@ -1,289 +1,264 @@
+import tkinter as tk
+from tkinter import messagebox
 import math
 from datetime import datetime
 
-
 class ScientificCalculator:
-    def __init__(self):
+
+    def __init__(self, root):
+        self.root = root
+        self.root.title("CalcMaster")
+        self.root.geometry("700x600")
+
         self.memory = 0
         self.history = []
 
-    # Basic Operations
-    def add(self, a, b):
-        return a + b
+        # Display
+        self.display = tk.Entry(
+            root,
+            font=("Arial", 20),
+            justify="right"
+        )
+        self.display.pack(fill="x", padx=10, pady=10)
 
-    def subtract(self, a, b):
-        return a - b
+        # History
+        self.history_box = tk.Text(
+            root,
+            height=10
+        )
+        self.history_box.pack(
+            fill="both",
+            padx=10,
+            pady=5
+        )
 
-    def multiply(self, a, b):
-        return a * b
+        self.create_buttons()
 
-    def divide(self, a, b):
-        if b == 0:
-            return "Cannot divide by zero"
-        return a / b
+    def add_history(self, text):
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        record = f"[{timestamp}] {text}\n"
 
-    def power(self, a, b):
-        return a ** b
+        self.history.append(record)
 
-    def modulus(self, a, b):
-        return a % b
+        self.history_box.insert(tk.END, record)
+        self.history_box.see(tk.END)
 
-    # Scientific Operations
-    def square_root(self, x):
-        return math.sqrt(x)
+    def insert(self, value):
+        self.display.insert(tk.END, value)
 
-    def factorial(self, x):
-        return math.factorial(int(x))
+    def clear(self):
+        self.display.delete(0, tk.END)
 
-    def sine(self, x):
-        return math.sin(math.radians(x))
-
-    def cosine(self, x):
-        return math.cos(math.radians(x))
-
-    def tangent(self, x):
-        return math.tan(math.radians(x))
-
-    def logarithm(self, x):
-        return math.log10(x)
-
-    # Expression Evaluation
-    def evaluate_expression(self, expression):
+    def evaluate(self):
         try:
-            return eval(expression)
-        except:
-            return "Invalid Expression"
+            expression = self.display.get()
+            result = eval(expression)
+
+            self.add_history(
+                f"{expression} = {result}"
+            )
+
+            self.clear()
+            self.insert(str(result))
+
+        except Exception:
+            messagebox.showerror(
+                "Error",
+                "Invalid Expression"
+            )
+
+    def scientific(self, operation):
+
+        try:
+            num = float(self.display.get())
+
+            if operation == "sqrt":
+                result = math.sqrt(num)
+
+            elif operation == "sin":
+                result = math.sin(math.radians(num))
+
+            elif operation == "cos":
+                result = math.cos(math.radians(num))
+
+            elif operation == "tan":
+                result = math.tan(math.radians(num))
+
+            elif operation == "log":
+                result = math.log10(num)
+
+            elif operation == "fact":
+                result = math.factorial(int(num))
+
+            self.add_history(
+                f"{operation}({num}) = {result}"
+            )
+
+            self.clear()
+            self.insert(str(result))
+
+        except Exception:
+            messagebox.showerror(
+                "Error",
+                "Invalid Input"
+            )
 
     # Memory Functions
-    def memory_add(self, value):
-        self.memory += value
+    def memory_add(self):
+        try:
+            self.memory += float(self.display.get())
+        except:
+            pass
 
-    def memory_subtract(self, value):
-        self.memory -= value
+    def memory_subtract(self):
+        try:
+            self.memory -= float(self.display.get())
+        except:
+            pass
 
     def memory_recall(self):
-        return self.memory
+        self.clear()
+        self.insert(str(self.memory))
 
     def memory_clear(self):
         self.memory = 0
 
-    # History
-    def add_history(self, record):
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.history.append(f"[{timestamp}] {record}")
-
-    def show_history(self):
-        if not self.history:
-            print("\nNo history found.")
-        else:
-            print("\n===== HISTORY =====")
-            for item in self.history:
-                print(item)
-
+    # Save History
     def save_history(self):
         with open("history.txt", "w") as file:
-            for item in self.history:
-                file.write(item + "\n")
-        print("History saved to history.txt")
+            file.writelines(self.history)
 
-    # Unit Conversions
-    def kg_to_lb(self, kg):
-        return kg * 2.20462
+        messagebox.showinfo(
+            "Saved",
+            "History saved to history.txt"
+        )
 
-    def lb_to_kg(self, lb):
-        return lb / 2.20462
+    # UI 
+    def create_buttons(self):
 
-    def km_to_mile(self, km):
-        return km * 0.621371
+        frame = tk.Frame(self.root)
+        frame.pack()
 
-    def mile_to_km(self, mile):
-        return mile / 0.621371
+        buttons = [
 
-    def celsius_to_fahrenheit(self, c):
-        return (c * 9 / 5) + 32
+            ['7', '8', '9', '/', 'sqrt'],
+            ['4', '5', '6', '*', 'sin'],
+            ['1', '2', '3', '-', 'cos'],
+            ['0', '.', '=', '+', 'tan'],
+            ['log', 'fact', 'C', '^', '%']
+        ]
 
-    def fahrenheit_to_celsius(self, f):
-        return (f - 32) * 5 / 9
+        for r, row in enumerate(buttons):
+
+            for c, text in enumerate(row):
+
+                if text == '=':
+
+                    btn = tk.Button(
+                        frame,
+                        text=text,
+                        width=10,
+                        height=2,
+                        command=self.evaluate
+                    )
+
+                elif text == 'C':
+
+                    btn = tk.Button(
+                        frame,
+                        text=text,
+                        width=10,
+                        height=2,
+                        command=self.clear
+                    )
+
+                elif text in [
+                    'sqrt',
+                    'sin',
+                    'cos',
+                    'tan',
+                    'log',
+                    'fact'
+                ]:
+
+                    btn = tk.Button(
+                        frame,
+                        text=text,
+                        width=10,
+                        height=2,
+                        command=lambda t=text:
+                        self.scientific(t)
+                    )
+
+                elif text == '^':
+
+                    btn = tk.Button(
+                        frame,
+                        text=text,
+                        width=10,
+                        height=2,
+                        command=lambda:
+                        self.insert("**")
+                    )
+
+                else:
+
+                    btn = tk.Button(
+                        frame,
+                        text=text,
+                        width=10,
+                        height=2,
+                        command=lambda t=text:
+                        self.insert(t)
+                    )
+
+                btn.grid(
+                    row=r,
+                    column=c,
+                    padx=2,
+                    pady=2
+                )
+
+        # Memory Buttons
+        mem_frame = tk.Frame(self.root)
+        mem_frame.pack(pady=10)
+
+        tk.Button(
+            mem_frame,
+            text="M+",
+            width=10,
+            command=self.memory_add
+        ).grid(row=0, column=0)
+
+        tk.Button(
+            mem_frame,
+            text="M-",
+            width=10,
+            command=self.memory_subtract
+        ).grid(row=0, column=1)
+
+        tk.Button(
+            mem_frame,
+            text="MR",
+            width=10,
+            command=self.memory_recall
+        ).grid(row=0, column=2)
+
+        tk.Button(
+            mem_frame,
+            text="MC",
+            width=10,
+            command=self.memory_clear
+        ).grid(row=0, column=3)
+
+        tk.Button(
+            mem_frame,
+            text="Save History",
+            width=15,
+            command=self.save_history
+        ).grid(row=0, column=4)
 
 
-calculator = ScientificCalculator()
-
-
-while True:
-
-    print("\n========== ADVANCED SCIENTIFIC CALCULATOR ==========")
-    print("1. Basic Operations")
-    print("2. Scientific Operations")
-    print("3. Evaluate Expression")
-    print("4. Memory Functions")
-    print("5. Unit Converter")
-    print("6. View History")
-    print("7. Save History")
-    print("8. Exit")
-
-    choice = input("Enter choice: ")
-
-    try:
-
-        # BASIC OPERATIONS
-        if choice == "1":
-
-            a = float(input("Enter first number: "))
-            op = input("Operation (+ - * / % ^): ")
-            b = float(input("Enter second number: "))
-
-            if op == "+":
-                result = calculator.add(a, b)
-            elif op == "-":
-                result = calculator.subtract(a, b)
-            elif op == "*":
-                result = calculator.multiply(a, b)
-            elif op == "/":
-                result = calculator.divide(a, b)
-            elif op == "%":
-                result = calculator.modulus(a, b)
-            elif op == "^":
-                result = calculator.power(a, b)
-            else:
-                result = "Invalid Operation"
-
-            print("Result:", result)
-            calculator.add_history(f"{a} {op} {b} = {result}")
-
-        # SCIENTIFIC OPERATIONS
-        elif choice == "2":
-
-            print("\n1. sqrt")
-            print("2. factorial")
-            print("3. sin")
-            print("4. cos")
-            print("5. tan")
-            print("6. log10")
-
-            sci = input("Select: ")
-            num = float(input("Enter number: "))
-
-            if sci == "1":
-                result = calculator.square_root(num)
-                operation = "sqrt"
-
-            elif sci == "2":
-                result = calculator.factorial(num)
-                operation = "factorial"
-
-            elif sci == "3":
-                result = calculator.sine(num)
-                operation = "sin"
-
-            elif sci == "4":
-                result = calculator.cosine(num)
-                operation = "cos"
-
-            elif sci == "5":
-                result = calculator.tangent(num)
-                operation = "tan"
-
-            elif sci == "6":
-                result = calculator.logarithm(num)
-                operation = "log"
-
-            else:
-                result = "Invalid Option"
-                operation = ""
-
-            print("Result:", result)
-            calculator.add_history(f"{operation}({num}) = {result}")
-
-        # EXPRESSION EVALUATION
-        elif choice == "3":
-
-            expression = input(
-                "Enter expression (Example: 5+6*3-2): "
-            )
-
-            result = calculator.evaluate_expression(expression)
-
-            print("Result:", result)
-            calculator.add_history(
-                f"Expression: {expression} = {result}"
-            )
-
-        # MEMORY FUNCTIONS
-        elif choice == "4":
-
-            print("\n1. M+")
-            print("2. M-")
-            print("3. MR")
-            print("4. MC")
-
-            mem = input("Select: ")
-
-            if mem == "1":
-                value = float(input("Enter value: "))
-                calculator.memory_add(value)
-
-            elif mem == "2":
-                value = float(input("Enter value: "))
-                calculator.memory_subtract(value)
-
-            elif mem == "3":
-                print("Memory =", calculator.memory_recall())
-
-            elif mem == "4":
-                calculator.memory_clear()
-                print("Memory Cleared")
-
-        # UNIT CONVERTER
-        elif choice == "5":
-
-            print("\n1. KG -> LB")
-            print("2. LB -> KG")
-            print("3. KM -> MILE")
-            print("4. MILE -> KM")
-            print("5. C -> F")
-            print("6. F -> C")
-
-            conv = input("Select: ")
-            value = float(input("Enter value: "))
-
-            if conv == "1":
-                result = calculator.kg_to_lb(value)
-
-            elif conv == "2":
-                result = calculator.lb_to_kg(value)
-
-            elif conv == "3":
-                result = calculator.km_to_mile(value)
-
-            elif conv == "4":
-                result = calculator.mile_to_km(value)
-
-            elif conv == "5":
-                result = calculator.celsius_to_fahrenheit(value)
-
-            elif conv == "6":
-                result = calculator.fahrenheit_to_celsius(value)
-
-            else:
-                result = "Invalid Conversion"
-
-            print("Result:", result)
-
-        # HISTORY
-        elif choice == "6":
-            calculator.show_history()
-
-        # SAVE HISTORY
-        elif choice == "7":
-            calculator.save_history()
-
-        # EXIT
-        elif choice == "8":
-            print("Goodbye!")
-            break
-
-        else:
-            print("Invalid choice.")
-
-    except Exception as e:
-        print("Error:", e)
+root = tk.Tk()
+app = ScientificCalculator(root)
+root.mainloop()
